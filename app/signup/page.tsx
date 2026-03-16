@@ -1,4 +1,4 @@
-export default function Login() {
+export default function SignUp() {
     return (
         <>
             Hi This is login page

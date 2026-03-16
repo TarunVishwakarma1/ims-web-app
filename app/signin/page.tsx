@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { REGEXP_ONLY_DIGITS } from 'input-otp';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -31,15 +32,16 @@ function fmtTime(s: number) {
 }
 
 export default function SignInPage() {
-    const [step, setStep]           = useState<Step>('email');
-    const [email, setEmail]         = useState('');
-    const [otp, setOtp]             = useState('');
-    const [loading, setLoading]     = useState(false);
+    const router = useRouter();
+    const [step, setStep] = useState<Step>('email');
+    const [email, setEmail] = useState('');
+    const [otp, setOtp] = useState('');
+    const [loading, setLoading] = useState(false);
 
     // Resend state
-    const [resendCount, setResendCount]         = useState(0);
-    const [cooldown, setCooldown]               = useState(0);   // seconds remaining
-    const [lockedFor, setLockedFor]             = useState(0);   // seconds remaining
+    const [resendCount, setResendCount] = useState(0);
+    const [cooldown, setCooldown] = useState(0);   // seconds remaining
+    const [lockedFor, setLockedFor] = useState(0);   // seconds remaining
     const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     // ── Countdown timer ──────────────────────────────────────────────────────
@@ -76,7 +78,7 @@ export default function SignInPage() {
 
     // ── Step 1: Send OTP ─────────────────────────────────────────────────────
 
-    async function handleEmailSubmit(e: React.FormEvent) {
+    async function handleEmailSubmit(e: React.SubmitEvent) {
         e.preventDefault();
         if (!email) return;
         setLoading(true);
@@ -154,7 +156,7 @@ export default function SignInPage() {
 
     // ── Step 2: Verify OTP ───────────────────────────────────────────────────
 
-    async function handleVerify(e: React.FormEvent) {
+    async function handleVerify(e: React.SubmitEvent) {
         e.preventDefault();
         if (otp.length < 6) return;
         setLoading(true);
@@ -165,11 +167,11 @@ export default function SignInPage() {
 
             if (result.ok) {
                 toast.success('Signed in successfully! Welcome back.', { id: toastId });
-                // TODO: redirect to dashboard
+                router.push('/home');
             } else {
                 const messages: Record<string, string> = {
-                    INVALID:   'Incorrect passcode. Please double-check and try again.',
-                    EXPIRED:   'Passcode has expired. Please request a new one.',
+                    INVALID: 'Incorrect passcode. Please double-check and try again.',
+                    EXPIRED: 'Passcode has expired. Please request a new one.',
                     NOT_FOUND: 'Session not found. Please start over.',
                 };
                 toast.error(messages[result.error] ?? 'Verification failed.', { id: toastId });
@@ -187,7 +189,7 @@ export default function SignInPage() {
 
     function resendLabel() {
         if (lockedFor > 0) return `Locked — try again in ${fmtTime(lockedFor)}`;
-        if (cooldown > 0)  return `Resend in ${fmtTime(cooldown)}`;
+        if (cooldown > 0) return `Resend in ${fmtTime(cooldown)}`;
         return `Resend passcode (${resendCount}/${MAX_RESENDS} used)`;
     }
 
@@ -215,7 +217,7 @@ export default function SignInPage() {
                             </CardHeader>
 
                             <CardContent className="space-y-4">
-                                <div className="space-y-2">
+                                <div className="space-y-2 pb-2">
                                     <Label htmlFor="email">Email address</Label>
                                     <Input
                                         id="email"

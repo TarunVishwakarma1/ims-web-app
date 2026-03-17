@@ -19,6 +19,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { loginUser } from '../actions/auth';
 
 type Step = 'email' | 'otp';
 
@@ -180,7 +181,8 @@ export default function SignInPage() {
 
             if (result.ok) {
                 toast.success('Signed in successfully! Welcome back.', { id: toastId });
-                router.push('/home');
+                await loginUser(email)
+                router.push('/home')
             } else {
                 const messages: Record<string, string> = {
                     INVALID: 'Incorrect passcode. Please double-check and try again.',
@@ -189,7 +191,8 @@ export default function SignInPage() {
                 };
                 toast.error(messages[result.error] ?? 'Verification failed.', { id: toastId });
             }
-        } catch {
+        } catch (error) {
+            console.error('Verify OTP Error:', error);
             toast.error('Something went wrong. Please try again.', { id: toastId });
         } finally {
             setLoading(false);

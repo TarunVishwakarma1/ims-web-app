@@ -4,6 +4,13 @@ import { Separator } from "@/components/ui/separator"
 import { ExternalLink } from "lucide-react"
 import Link from "next/link"
 
+/**
+ * Renders a centered signup UI with a title, subtitle, a card containing a split "or" divider, and a link to the sign-in page.
+ *
+ * This component is purely presentational and contains no state or side effects.
+ *
+ * @returns The rendered SignUp React element
+ */
 export default function SignUp() {
     return (
         <div className="min-h-screen flex items-center justify-center bg-background px-4">

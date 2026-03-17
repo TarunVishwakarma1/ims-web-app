@@ -5,16 +5,21 @@ import { redirect } from "next/navigation";
 import { createAccessToken, generateRefreshToken, hashToken, verifyAccessToken } from "@/lib/session";
 import { redis } from "@/lib/redis";
 
-export async function loginUser(userId: string) {
+export async function loginUser(userId: string): Promise<{ success: boolean, refreshable: boolean }> {
+    if (!userId?.trim()) {
+        throw new Error("Invalid userId");
+    }
     const sessionId = crypto.randomUUID();
     const accessToken = await createAccessToken(userId, sessionId);
     const refreshToken = generateRefreshToken();
 
     // Save hashed Refresh Token to Redis (7 days)
+    let refreshable = true;
     try {
         await redis.setEx(`session:${sessionId}`, 60 * 60 * 24 * 7, hashToken(refreshToken));
     } catch (error) {
         console.error("Redis failed during login, session will not be refreshable.", error);
+        refreshable = false
     }
 
     const cookieStore = await cookies();
@@ -29,7 +34,7 @@ export async function loginUser(userId: string) {
         maxAge: 60 * 60 * 24 * 7, path: '/api/auth/refresh', // Restricted path
     });
 
-    redirect('/home');
+    return { success: true, refreshable };
 }
 
 export async function logoutUser() {
@@ -45,7 +50,7 @@ export async function logoutUser() {
                 await redis.del(`session:${payload.sid}`);
 
                 // 2. Denylist the active Access Token until it naturally expires
-                const expiresIn = payload.exp! - Math.floor(Date.now() / 1000);
+                const expiresIn = (payload.exp ?? 0) - Math.floor(Date.now() / 1000);
                 if (expiresIn > 0) {
                     await redis.setEx(`denylist:${payload.jti}`, expiresIn, 'revoked');
                 }

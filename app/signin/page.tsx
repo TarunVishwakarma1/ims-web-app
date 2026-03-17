@@ -19,6 +19,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { loginUser } from '../actions/auth';
 
 type Step = 'email' | 'otp';
 
@@ -167,6 +168,7 @@ export default function SignInPage() {
 
             if (result.ok) {
                 toast.success('Signed in successfully! Welcome back.', { id: toastId });
+                await loginUser(email)
                 router.push('/home');
             } else {
                 const messages: Record<string, string> = {

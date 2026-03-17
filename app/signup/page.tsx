@@ -1,7 +1,5 @@
-import { Badge } from "@/components/ui/badge"
 import { Card, CardFooter } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { ExternalLink } from "lucide-react"
 import Link from "next/link"
 
 export default function SignUp() {

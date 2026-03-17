@@ -26,12 +26,25 @@ type Step = 'email' | 'otp';
 const RESEND_COOLDOWN = 60;
 const MAX_RESENDS = 3;
 
+/**
+ * Format a duration given in seconds into a compact human-readable string.
+ *
+ * @param s - Duration in seconds
+ * @returns A string in the form "`<m>m <s>s`" when at least one minute is present, otherwise "`<s>s`"
+ */
 function fmtTime(s: number) {
     const m = Math.floor(s / 60);
     const sec = s % 60;
     return m > 0 ? `${m}m ${sec}s` : `${sec}s`;
 }
 
+/**
+ * Render the sign-in page with email and one-time passcode (OTP) authentication flows.
+ *
+ * Manages sending and resending OTPs, cooldown and lockout timers, and verification flow including navigation on success.
+ *
+ * @returns A React element that renders the sign-in UI with email entry, a 6-digit OTP input, resend controls (with cooldown/lockout display), and buttons for submitting, resending, or switching email. 
+ */
 export default function SignInPage() {
     const router = useRouter();
     const [step, setStep] = useState<Step>('email');

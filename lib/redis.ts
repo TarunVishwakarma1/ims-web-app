@@ -19,7 +19,7 @@ if (process.env.NODE_ENV !== 'production') {
     globalForRedis.redis = redis;
 }
 
-redis.on('error', (err) => console.warn('Redis Client Error:', err.message));
+redis.on('error', (err) => console.warn('Redis Client Error:', err));
 
 if (!redis.isOpen) {
     await redis.connect().catch(() => console.warn('Initial Redis connection failed.'));

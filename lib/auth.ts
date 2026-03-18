@@ -12,7 +12,6 @@ export async function requireUser() {
     const userId = await getCurrentUserId();
 
     if (!userId) {
-        // Fallback protection just in case a route slips past the proxy matcher
         redirect('/');
     }
 

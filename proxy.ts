@@ -1,77 +1,69 @@
-// proxy.ts
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { verifyAccessToken } from '@/lib/session';
+import { verifyAccessToken, hashToken, generateRefreshToken, createAccessToken } from '@/lib/session';
 import { redis } from '@/lib/redis';
 
-// Define the routes where logged-in users should NOT be allowed
-const authRoutes: Set<string> = new Set();
-authRoutes.add('/');
-authRoutes.add('/signin');
-authRoutes.add('/signup');
+const authRoutes = new Set(['/', '/signin', '/signup']);
 
 export async function proxy(request: NextRequest) {
     const path = request.nextUrl.pathname;
     const isAuthRoute = authRoutes.has(path);
 
-    const accessToken = request.cookies.get('access_token')?.value;
+    let accessToken = request.cookies.get('access_token')?.value;
     const refreshToken = request.cookies.get('refresh_token')?.value;
 
-    // --- SCENARIO 1: User is visiting Signin/Signup ---
-    if (isAuthRoute) {
-        // If they have a refresh token or an access token, assume they are logged in.
-        // We bounce them to /home immediately. 
-        if (accessToken || refreshToken) {
-            return NextResponse.redirect(new URL('/home', request.url));
-        }
+    let payload = accessToken ? await verifyAccessToken(accessToken) : null;
+    let tokensRotated = false;
 
-        // If they have no tokens, let them render the login page
+    if (!payload && refreshToken) {
+        try {
+            const hashedRefresh = hashToken(refreshToken);
+            const sessionDataStr = await redis.get(`refresh:${hashedRefresh}`);
+
+            if (sessionDataStr) {
+                const sessionData = JSON.parse(sessionDataStr);
+                const newRefresh = generateRefreshToken();
+                accessToken = await createAccessToken(sessionData.sub, sessionData.sid);
+
+                await redis.setEx(`refresh:${hashedRefresh}`, 30, sessionDataStr);
+                await redis.setEx(`refresh:${hashToken(newRefresh)}`, 60 * 60 * 24 * 7, sessionDataStr);
+
+                payload = { sub: sessionData.sub, sid: sessionData.sid, jti: 'new' };
+                tokensRotated = true;
+                request.cookies.set('refresh_token', newRefresh);
+            }
+        } catch (error) { console.error('Redis unreachable during middleware rotation', error); }
+    }
+
+    if (isAuthRoute) {
+        if (payload) return NextResponse.redirect(new URL('/home', request.url));
         return NextResponse.next();
     }
 
-    // --- SCENARIO 2: User is visiting a Protected Route (/home) ---
-    if (!accessToken) {
-        return clearSessionAndRedirect(request);
-    }
+    if (!payload) return clearSessionAndHandle(request);
 
-    const payload = await verifyAccessToken(accessToken);
-
-    if (!payload) {
-        // Token is invalid or mathematically expired
-        return clearSessionAndRedirect(request);
-    }
-
-    // Fail-Open Redis Check for Explicit Logout/Revocation
     try {
         const isRevoked = await redis.get(`denylist:${payload.jti}`);
-        if (isRevoked) {
-            return clearSessionAndRedirect(request);
-        }
-    } catch (error) {
-        console.warn(`Redis unreachable in proxy. Allowing valid JWT for sub: ${payload.sub}`, error);
-    }
+        if (isRevoked) return clearSessionAndHandle(request);
+    } catch (error) { console.warn(`Redis unreachable in proxy. Allowing valid JWT.`, error); }
 
-    // Success: Attach user ID and proceed
     const response = NextResponse.next();
     response.headers.set('x-user-id', payload.sub);
 
+    if (tokensRotated) {
+        response.cookies.set('access_token', accessToken!, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 15 * 60, path: '/' });
+        response.cookies.set('refresh_token', request.cookies.get('refresh_token')!.value, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 60 * 60 * 24 * 7, path: '/' });
+    }
+
     return response;
 }
 
-function clearSessionAndRedirect(request: NextRequest) {
-    // If they fail auth on a protected route, send them to the root login
-    const response = NextResponse.redirect(new URL('/', request.url));
+function clearSessionAndHandle(request: NextRequest) {
+    const isApiRequest = request.nextUrl.pathname.startsWith('/api/');
+    let response = isApiRequest ? NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) : NextResponse.redirect(new URL('/', request.url));
     response.cookies.delete('access_token');
+    response.cookies.delete('refresh_token');
     return response;
 }
 
-export const config = {
-    // Expand the matcher to intercept auth pages alongside protected pages
-    matcher: [
-        '/',
-        '/signin',
-        '/signup',
-        '/home/:path*',
-        '/api/protected/:path*'
-    ],
-};
+export const config = { matcher: ['/', '/signin', '/signup', '/home/:path*', '/api/protected/:path*'] };

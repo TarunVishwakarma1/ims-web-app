@@ -5,6 +5,7 @@
     "": {
       "name": "ims-web-app",
       "dependencies": {
+        "@radix-ui/react-collapsible": "^1.1.12",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "date-fns": "^4.1.0",

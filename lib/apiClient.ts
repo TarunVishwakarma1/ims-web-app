@@ -12,9 +12,8 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}): Pro
     if (response.status !== 401) return response;
 
     if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-            failedQueue.push({ resolve, reject });
-        }).then(() => fetch(url, options)).catch((err) => { throw err });
+        return new Promise((resolve, reject) => failedQueue.push({ resolve, reject }))
+            .then(() => fetch(url, options)).catch((err) => { throw err });
     }
 
     isRefreshing = true;
@@ -22,13 +21,8 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}): Pro
     try {
         const refreshResponse = await fetch('/api/auth/refresh', { method: 'POST' });
 
-        if (refreshResponse.status === 500) {
-            throw new Error('Server unavailable, please try again later.');
-        }
-
-        if (!refreshResponse.ok) {
-            throw new Error('Session expired');
-        }
+        if (refreshResponse.status === 500) throw new Error('Server unavailable');
+        if (!refreshResponse.ok) throw new Error('Session expired');
 
         processQueue(null);
         return fetch(url, options);

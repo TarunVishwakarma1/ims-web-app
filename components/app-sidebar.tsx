@@ -42,7 +42,6 @@ import {
 } from "@/components/ui/sidebar"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./ui/collapsible"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
-import { ThemeCustomizer } from "./theme-customizer"
 
 // Example navigation data
 const data = {

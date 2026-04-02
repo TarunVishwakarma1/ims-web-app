@@ -32,6 +32,7 @@ import { Button } from "@/components/ui/button"
 import { Search, SlidersHorizontal, Trash2 } from "lucide-react"
 import { ShortcutKey } from "@/components/ui/shortcut-key"
 import { useShortcut } from "@/hooks/use-shortcut"
+import { useLivePush } from "@/hooks/use-live-push"
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -42,17 +43,27 @@ import {
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
+  /** Optional channel name to listen to for real-time pushed updates (e.g. "inventory") */
+  liveEndpoint?: string
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data: initialData,
+  liveEndpoint,
 }: Readonly<DataTableProps<TData, TValue>>) {
   const [data, setData] = React.useState<TData[]>(initialData)
 
+  // Hard reloads trigger the Server Component to refetch and pass new initialData
   React.useEffect(() => {
     setData(initialData)
   }, [initialData])
+
+  // Soft updates are pushed seamlessly via our custom socket/SSE hook
+  useLivePush<TData>(liveEndpoint, React.useCallback((pushedItems) => {
+    // Merge newly pushed items into the top of the local memory table seamlessly
+    setData(prev => [...pushedItems, ...prev])
+  }, []))
 
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] =

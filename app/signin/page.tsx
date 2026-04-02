@@ -182,7 +182,7 @@ export default function SignInPage() {
             if (result.ok) {
                 toast.success('Signed in successfully! Welcome back.', { id: toastId });
                 await loginUser(email)
-                router.push('/home')
+                router.push('/dashboard')
             } else {
                 const messages: Record<string, string> = {
                     INVALID: 'Incorrect passcode. Please double-check and try again.',

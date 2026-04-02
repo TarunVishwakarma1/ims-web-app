@@ -66,4 +66,4 @@ function clearSessionAndHandle(request: NextRequest) {
     return response;
 }
 
-export const config = { matcher: ['/', '/signin', '/signup', '/home/:path*', '/api/protected/:path*'] };
+export const config = { matcher: ['/', '/signin', '/signup', '/dashboard/:path*', '/api/protected/:path*'] };

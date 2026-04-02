@@ -10,10 +10,9 @@ import React from "react";
  */
 export default function HomeLayout({ children }: Readonly<{ children: React.ReactNode }>) {
     return (
-        <SidebarProvider>
+        <SidebarProvider >
             <AppSidebar />
-            <main>
-                <SidebarTrigger />
+            <main className="flex-1 w-full flex flex-col min-h-screen">
                 {children}
             </main>
         </SidebarProvider>

@@ -86,7 +86,7 @@ function hashOTP(otp: string): string {
 
 /** Call the email microservice at localhost:8080 */
 async function triggerEmail(to: string, otp: string): Promise<void> {
-    const res = await fetch(`${EMAIL_SERVICE_URL}/email`, {
+    const res = await fetch(`${EMAIL_SERVICE_URL}/send-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ to, otp }),

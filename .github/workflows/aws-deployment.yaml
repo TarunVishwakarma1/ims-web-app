@@ -1,0 +1,7 @@
+on: push
+jobs:
+    print_working:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Say Working
+              run: echo {{input.username}} ran the job on ${whoami}

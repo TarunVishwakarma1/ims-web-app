@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import {
     LayoutDashboard,
     Box,
@@ -53,24 +54,14 @@ const data = {
     navMain: [
         {
             title: "Dashboard",
-            url: "#",
+            url: "/dashboard",
             icon: LayoutDashboard,
             isActive: true,
-            items: [
-                { title: "Overview", url: "#" },
-                { title: "Analytics", url: "#" },
-            ],
         },
         {
             title: "Inventory",
-            url: "#",
+            url: "/dashboard/inventory",
             icon: Box,
-            items: [
-                { title: "All Items", url: "#" },
-                { title: "Categories", url: "#" },
-                { title: "Suppliers", url: "#" },
-                { title: "Warehouses", url: "#" },
-            ],
         },
         {
             title: "Sales & Orders",
@@ -84,21 +75,21 @@ const data = {
         },
         {
             title: "Customers",
-            url: "#",
+            url: "/dashboard/customers",
             icon: Users,
         },
         {
             title: "Reports",
-            url: "#",
+            url: "/dashboard/reports",
             icon: BarChart,
             items: [
-                { title: "Financials", url: "#" },
-                { title: "Stock Movements", url: "#" },
+                { title: "Financials", url: "/dashboard/reports/financials" },
+                { title: "Stock Movements", url: "/dashboard/reports/stock" },
             ],
         },
         {
             title: "Settings",
-            url: "#",
+            url: "/settings",
             icon: Settings,
             items: [
                 { title: "General", url: "#" },
@@ -130,41 +121,53 @@ export default function AppSidebar({ ...props }: React.ComponentProps<typeof Sid
 
             <SidebarContent className="pl-2">
                 <SidebarMenu>
-                    {data.navMain.map((item) => (
-                        <Collapsible
-                            key={item.title}
-                            asChild
-                            defaultOpen={item.isActive}
-                            className="group/collapsible"
-                        >
-                            <SidebarMenuItem>
-                                <CollapsibleTrigger asChild>
-                                    <SidebarMenuButton tooltip={item.title}>
-                                        {item.icon && <item.icon className="text-muted-foreground group-data-[state=open]/collapsible:text-primary transition-colors" />}
+                    {data.navMain.map((item) => {
+                        if (item.items && item.items.length > 0) {
+                            return (
+                                <Collapsible
+                                    key={item.title}
+                                    asChild
+                                    defaultOpen={item.isActive}
+                                    className="group/collapsible"
+                                >
+                                    <SidebarMenuItem>
+                                        <CollapsibleTrigger asChild>
+                                            <SidebarMenuButton tooltip={item.title}>
+                                                {item.icon && <item.icon className="text-muted-foreground group-data-[state=open]/collapsible:text-primary transition-colors" />}
+                                                <span className="font-medium">{item.title}</span>
+                                                <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                                            </SidebarMenuButton>
+                                        </CollapsibleTrigger>
+                                        <CollapsibleContent>
+                                            <SidebarMenuSub>
+                                                {item.items.map((subItem) => (
+                                                    <SidebarMenuSubItem key={subItem.title}>
+                                                        <SidebarMenuSubButton asChild>
+                                                            <Link href={subItem.url} className="text-muted-foreground hover:text-foreground">
+                                                                <span>{subItem.title}</span>
+                                                            </Link>
+                                                        </SidebarMenuSubButton>
+                                                    </SidebarMenuSubItem>
+                                                ))}
+                                            </SidebarMenuSub>
+                                        </CollapsibleContent>
+                                    </SidebarMenuItem>
+                                </Collapsible>
+                            )
+                        }
+
+                        // Simple single link structure when no items array is provided
+                        return (
+                            <SidebarMenuItem key={item.title}>
+                                <SidebarMenuButton asChild tooltip={item.title} isActive={item.isActive}>
+                                    <Link href={item.url || "#"} className="flex items-center">
+                                        {item.icon && <item.icon className="text-muted-foreground transition-colors" />}
                                         <span className="font-medium">{item.title}</span>
-                                        {item.items && item.items.length > 0 && (
-                                            <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                                        )}
-                                    </SidebarMenuButton>
-                                </CollapsibleTrigger>
-                                {item.items && item.items.length > 0 && (
-                                    <CollapsibleContent>
-                                        <SidebarMenuSub>
-                                            {item.items.map((subItem) => (
-                                                <SidebarMenuSubItem key={subItem.title}>
-                                                    <SidebarMenuSubButton asChild>
-                                                        <a href={subItem.url} className="text-muted-foreground hover:text-foreground">
-                                                            <span>{subItem.title}</span>
-                                                        </a>
-                                                    </SidebarMenuSubButton>
-                                                </SidebarMenuSubItem>
-                                            ))}
-                                        </SidebarMenuSub>
-                                    </CollapsibleContent>
-                                )}
+                                    </Link>
+                                </SidebarMenuButton>
                             </SidebarMenuItem>
-                        </Collapsible>
-                    ))}
+                        )
+                    })}
                 </SidebarMenu>
             </SidebarContent>
 

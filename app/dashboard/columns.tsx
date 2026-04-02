@@ -15,8 +15,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuShortcut,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { ShortcutKey } from "@/components/ui/shortcut-key"
 
 export const columns: ColumnDef<InventoryItem>[] = [
   {
@@ -150,7 +152,7 @@ export const columns: ColumnDef<InventoryItem>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }) => {
+    cell: ({ row, table }) => {
       const item = row.original
 
       return (
@@ -172,7 +174,15 @@ export const columns: ColumnDef<InventoryItem>[] = [
             <DropdownMenuItem>View details</DropdownMenuItem>
             <DropdownMenuItem>Edit item</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive">Delete item</DropdownMenuItem>
+            <DropdownMenuItem 
+              className="text-destructive"
+              onClick={() => (row.original as any).id ? (table.options.meta as any)?.removeRow(row.index) : null}
+            >
+              Delete item
+              <DropdownMenuShortcut>
+                <ShortcutKey keys={["Backspace"]} className="bg-transparent text-muted-foreground/70" />
+              </DropdownMenuShortcut>
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
